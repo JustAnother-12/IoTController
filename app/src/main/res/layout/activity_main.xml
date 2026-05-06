@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity"
+    android:orientation="vertical">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Smart Sensor Controller"
+        android:textSize="32dp"
+        android:textStyle="bold"
+        android:layout_gravity="center"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/tgl_master"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Service switch"
+            android:textSize="24sp"
+            android:checked="false"/>
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/tgl_volume"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Volume control switch"
+            android:textSize="16sp"
+            android:checked="false"/>
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/tgl_media"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Media control switch"
+            android:textSize="16sp"
+            android:checked="false"/>
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/tgl_flashlight"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Flashlight control switch"
+            android:textSize="16sp"
+            android:checked="false"/>
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/tgl_smartTV"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Smart TV control switch"
+            android:textSize="16sp"
+            android:checked="false"/>
+    </LinearLayout>
+
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/fragment_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+</LinearLayout>

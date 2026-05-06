@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:padding="10sp"
+    tools:context=".IoTControllerFragment">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:textSize="20sp"
+            android:text="Smart TV Controls"
+            android:layout_weight="8"/>
+
+        <ToggleButton
+            android:id="@+id/btn_Discover"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="2"
+            android:background="@drawable/toggle_bg"
+            android:textColor="@android:color/white"
+            android:textOff="START SCAN"
+            android:textOn="STOP SCAN" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/txt_paired_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="16sp"
+            android:layout_gravity="center_vertical"
+            android:layout_marginRight="10sp"
+            android:text="Paired Device:"
+            android:layout_weight="2"/>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_weight="6">
+
+            <TextView
+                android:id="@+id/txt_paired_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="16sp" />
+
+            <TextView
+                android:id="@+id/txt_paired_IP"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="16sp" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_sync_pointer"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:padding="0dp"
+            android:backgroundTint="@android:color/holo_blue_light"
+            android:text="Sync Pointer"
+            app:cornerRadius="10dp"
+            android:layout_weight="1"/>
+
+        <Space
+            android:layout_width="20dp"
+            android:layout_height="match_parent"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_sync_keyboard"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:padding="0dp"
+            android:backgroundTint="@android:color/holo_blue_light"
+            android:text="Sync Keyboard"
+            app:cornerRadius="10dp"
+            android:layout_weight="1"/>
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:textSize="20sp"
+        android:text="List of discovered devices" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recylerDevices"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"/>
+
+    <android.gesture.GestureOverlayView
+        android:id="@+id/gestureOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="150dp"
+        android:layout_gravity="bottom"
+        android:background="@android:color/background_dark" />
+    <EditText
+        android:id="@+id/hiddenEdit"
+        android:layout_width="0dp"
+        android:layout_height="0dp"/>
+
+</LinearLayout>

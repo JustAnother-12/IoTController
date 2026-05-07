@@ -50,7 +50,7 @@ public class IoTController {
             try {
                 JSONObject payload = new JSONObject();
                 payload.put("subscribe", true);
-                webOSClient.sendSystemCommand("ssap://com.webos.service.ime/registerRemoteKeyboard", payload);
+                webOSClient.sendSystemCommand("com.webos.service.ime/registerRemoteKeyboard", payload);
             }catch (Exception e){
                 e.printStackTrace();
             }
@@ -63,10 +63,28 @@ public class IoTController {
                 JSONObject payload = new JSONObject();
                 payload.put("text", newChars);
                 payload.put("replace", isReplace);
-                webOSClient.sendSystemCommand("ssap://com.webos.service.ime/insertText", payload);
+                webOSClient.sendSystemCommand("com.webos.service.ime/insertText", payload);
             }catch (Exception e){
                 e.printStackTrace();
             }
+        }
+    }
+
+    public void deleteKeyboardText(int count){
+        if(webOSClient != null && webOSClient.isOpen()){
+            try{
+                JSONObject payload = new JSONObject();
+                payload.put("count", count);
+                webOSClient.sendSystemCommand("com.webos.service.ime/deleteCharacters", payload);
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void sendEnterKey(){
+        if(webOSClient != null && webOSClient.isOpen()){
+            webOSClient.sendSystemCommand("com.webos.service.ime/sendEnterKey", null);
         }
     }
 }

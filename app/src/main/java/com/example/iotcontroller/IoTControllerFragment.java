@@ -1,10 +1,11 @@
 package com.example.iotcontroller;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.gesture.GestureOverlayView;
 import android.os.Bundle;
 import android.text.Editable;
@@ -19,13 +20,11 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 
-import androidx.activity.result.ActivityResultLauncher;
 import androidx.annotation.NonNull;
-import androidx.annotation.RequiresPermission;
+import androidx.appcompat.widget.SwitchCompat;
 import androidx.fragment.app.Fragment;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -37,14 +36,14 @@ import com.example.iotcontroller.providers.GestureProvider;
 import com.example.iotcontroller.services.SensorService;
 
 import java.util.ArrayList;
-import java.util.Objects;
 
 
 public class IoTControllerFragment extends Fragment {
     private TextView txtPairedName, txtPairedIP;
     private EditText hiddenEditText;
     private GestureOverlayView gestureOverlayView;
-    private Button btnSyncPointer, btnSyncKeyboard;
+    private Button btnSyncKeyboard;
+    private SwitchCompat tglSyncPointer;
     private ToggleButton btnDiscover;
     private ArrayList<IoTDevice> deviceList;
     private RecyclerView recyclerView;
@@ -56,6 +55,8 @@ public class IoTControllerFragment extends Fragment {
     private BroadcastReceiver broadcastReceiver;
 
     private InputMethodManager inputMethodManager;
+
+    private SharedPreferences sharedPreferences;
 
 
     public IoTControllerFragment() {
@@ -84,7 +85,7 @@ public class IoTControllerFragment extends Fragment {
         hiddenEditText = rootView.findViewById(R.id.hiddenEdit);
         btnDiscover = rootView.findViewById(R.id.btn_Discover);
         btnSyncKeyboard = rootView.findViewById(R.id.btn_sync_keyboard);
-        btnSyncPointer = rootView.findViewById(R.id.btn_sync_pointer);
+        tglSyncPointer = rootView.findViewById(R.id.btn_sync_pointer);
         recyclerView = rootView.findViewById(R.id.recylerDevices);
         gestureOverlayView = rootView.findViewById(R.id.gestureOverlay);
 
@@ -103,10 +104,12 @@ public class IoTControllerFragment extends Fragment {
 
         inputMethodManager = (InputMethodManager) requireContext().getSystemService(Context.INPUT_METHOD_SERVICE);
 
+        sharedPreferences = requireContext().getSharedPreferences("SmartControlPreference", Context.MODE_PRIVATE);
+
         broadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                String actionName = intent.getStringExtra("action_type");
+                String actionName = intent.getStringExtra("action");
                 if ("SHOW_KEYBOARD".equals(actionName)) {
                     hiddenEditText.requestFocus();
                     inputMethodManager.showSoftInput(hiddenEditText, InputMethodManager.SHOW_IMPLICIT);
@@ -115,6 +118,9 @@ public class IoTControllerFragment extends Fragment {
                 }
             }
         };
+
+        LocalBroadcastManager.getInstance(requireContext()).registerReceiver(
+                broadcastReceiver, new IntentFilter("COMMAND_UI"));
 
         ioTDeviceRepository = IoTDeviceRepository.getInstance();
         ioTDeviceRepository.getDeviceList().observe(getViewLifecycleOwner(), devices ->{
@@ -141,12 +147,34 @@ public class IoTControllerFragment extends Fragment {
                 }
             }
         });
+        tglSyncPointer.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(@NonNull CompoundButton buttonView, boolean isChecked) {
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.putBoolean("SyncPointer", tglSyncPointer.isChecked());
+                editor.apply();
+            }
+        });
         btnSyncKeyboard.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                subcribeKeyboard();
+                subscribeKeyboard();
             }
         });
+
+        hiddenEditText.setOnKeyListener((v, keyCode, event) -> {
+            if (event.getAction() == KeyEvent.ACTION_DOWN) {
+                if (keyCode == KeyEvent.KEYCODE_DEL) {
+                    sendActionToService("BACKSPACE");
+                    return true;
+                } else if (keyCode == KeyEvent.KEYCODE_ENTER) {
+                    sendActionToService("ENTER_KEY");
+                    return true;
+                }
+            }
+            return false;
+        });
+
         hiddenEditText.addTextChangedListener(new TextWatcher() {
             @Override
             public void afterTextChanged(Editable s) {
@@ -193,15 +221,15 @@ public class IoTControllerFragment extends Fragment {
         getContext().startService(intent);
     }
 
-    private void subcribeKeyboard(){
+    private void subscribeKeyboard(){
         Intent intent = new Intent(getContext(), SensorService.class);
         intent.setAction("ACTION_SUBSCRIBE_KEYBOARD");
         getContext().startService(intent);
     }
 
-    private void sendActionToService(String newChars){
-        Intent intent = new Intent("COM_EXAMPLE_IOT_GESTURE");
-        intent.putExtra("new_typed_chars", newChars);
+    private void sendActionToService(String keycode){
+        Intent intent = new Intent("IOT_COMMAND");
+        intent.putExtra("typed_key", keycode);
         LocalBroadcastManager.getInstance(requireContext()).sendBroadcast(intent);
     }
 }

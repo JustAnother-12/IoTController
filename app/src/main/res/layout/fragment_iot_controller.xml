@@ -72,14 +72,12 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal">
 
-        <com.google.android.material.button.MaterialButton
+        <androidx.appcompat.widget.SwitchCompat
             android:id="@+id/btn_sync_pointer"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:padding="0dp"
-            android:backgroundTint="@android:color/holo_blue_light"
             android:text="Sync Pointer"
-            app:cornerRadius="10dp"
+            android:checked="false"
             android:layout_weight="1"/>
 
         <Space
@@ -117,7 +115,13 @@
         android:background="@android:color/background_dark" />
     <EditText
         android:id="@+id/hiddenEdit"
-        android:layout_width="0dp"
-        android:layout_height="0dp"/>
+        android:layout_width="1dp"
+        android:layout_height="1dp"
+        android:layout_centerInParent="true"
+        android:background="@android:color/transparent"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:inputType="textNoSuggestions"
+        android:importantForAutofill="no"/>
 
 </LinearLayout>

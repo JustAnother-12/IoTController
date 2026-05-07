@@ -31,10 +31,6 @@ public class AccelProvider implements SensorEventListener {
                 callForVolumeChange(event);
             if (sharedPreferences.getBoolean("FlashlightControl", false))
                 callForFlashlightToggle(event);
-//            if (sharedPreferences.getBoolean("SmartTVControl", false))
-//                if (sharedPreferences.getString("ConnectedIp", null) != null
-//                        && sharedPreferences.getString("ClientKey", null) != null)
-//                    callForIoTControls(event);
         }
     }
 

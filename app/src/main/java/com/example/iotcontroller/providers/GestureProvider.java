@@ -86,7 +86,7 @@ public class GestureProvider extends GestureDetector.SimpleOnGestureListener {
     }
 
     private void sendActionBroadcast(String actionName) {
-        Intent intent = new Intent("COM_IOT_GESTURE");
+        Intent intent = new Intent("IOT_COMMAND");
         intent.putExtra("action_type", actionName);
         LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
     }

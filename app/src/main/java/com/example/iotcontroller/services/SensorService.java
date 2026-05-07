@@ -96,7 +96,7 @@ public class SensorService extends Service implements OnSensorActionListener {
         super.onCreate();
         init();
         LocalBroadcastManager.getInstance(this).registerReceiver(
-                broadcastReceiver, new IntentFilter("COM_EXAMPLE_IOT_GESTURE"));
+                broadcastReceiver, new IntentFilter("IOT_COMMAND"));
     }
 
     private void init(){
@@ -130,13 +130,17 @@ public class SensorService extends Service implements OnSensorActionListener {
             @Override
             public void onReceive(Context context, Intent intent) {
                 String actionName = intent.getStringExtra("action_type");
-                String newChars = intent.getStringExtra("new_typed_chars");
+                String keycode = intent.getStringExtra("typed_key");
                 if (actionName != null) {
                     handleGestureAction(actionName);
                 }
-                if (newChars != null){
-                    if(ioTController != null){
-                        ioTController.insertKeyboardText(newChars, false);
+                if (keycode != null && ioTController != null){
+                    if(keycode.equals("ENTER_KEY")){
+                        ioTController.sendEnterKey();
+                    } else if (keycode.equals("BACKSPACE")) {
+                        ioTController.deleteKeyboardText(1);
+                    }else {
+                        ioTController.insertKeyboardText(keycode, false);
                     }
                 }
             }
@@ -223,6 +227,7 @@ public class SensorService extends Service implements OnSensorActionListener {
 
         if(sensorManager != null){
             sensorManager.unregisterListener(accelProvider);
+            sensorManager.unregisterListener(gyroProvider);
             // add more later
         }
         Toast.makeText(this, "Service Stopped!", Toast.LENGTH_SHORT).show();
@@ -392,7 +397,8 @@ public class SensorService extends Service implements OnSensorActionListener {
     private void sensorRegister(){
         if (accelerometer != null) {
             sensorManager.registerListener(accelProvider, accelerometer, SensorManager.SENSOR_DELAY_UI);
-            sensorManager.registerListener(gyroProvider, gyroscope, SensorManager.SENSOR_DELAY_UI);
+            // low delay for high accuracy
+            sensorManager.registerListener(gyroProvider, gyroscope, SensorManager.SENSOR_DELAY_GAME);
 
             Log.d("IOT_DEBUG", "Sensor Registered!");
         } else {
@@ -447,35 +453,9 @@ public class SensorService extends Service implements OnSensorActionListener {
     }
 
     @Override
-    public void onActionTriggered(String actionName) {
-//        if(ioTController.getWebOSClient() != null){
-//            switch (actionName){
-//                case "TOAST":
-//                    ioTController.handleShowToast(actionName);
-//                    break;
-//                case "ENTER":
-//                    ioTController.handleRemoteButton("ENTER");
-//                    break;
-//                case "HOME":
-//                    ioTController.handleRemoteButton("HOME");
-//                    break;
-//                case "BACK":
-//                    ioTController.handleRemoteButton("BACK");
-//                    break;
-//                case "LEFT":
-//                    ioTController.handleRemoteButton("LEFT");
-//                    break;
-//                case "RIGHT":
-//                    ioTController.handleRemoteButton("RIGHT");
-//                    break;
-//                case "UP":
-//                    ioTController.handleRemoteButton("UP");
-//                    break;
-//                case "DOWN":
-//                    ioTController.handleRemoteButton("DOWN");
-//                    break;
-//            }
-//        }
+    public void onPointerMovementChanged(int dx, int dy) {
+        if(ioTController != null){
+            ioTController.handlePointerMove(dx, dy);
+        }
     }
-
 }

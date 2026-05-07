@@ -103,13 +103,13 @@ public class WebOSClient extends WebSocketClient {
                 String socketUrl = json.getJSONObject("payload").getString("socketPath");
                 Log.d("WebOS_Pointer", "Đã lấy được Pointer URL: " + socketUrl);
 
-                // Khởi tạo kết nối WebSocket thứ hai tới socketUrl này
                 setupPointerWebSocket(socketUrl);
             }
 
-            if (message.contains("registerRemoteKeyboard")) {
+            if (json.has("payload") && json.getJSONObject("payload").has("currentWidget")) {
                 JSONObject payload = json.getJSONObject("payload");
-                boolean isKeyboardVisible = payload.optBoolean("focused", false);
+                JSONObject currentWidget = payload.getJSONObject("currentWidget");
+                boolean isKeyboardVisible = currentWidget.optBoolean("focus", false);
                 if (isKeyboardVisible) {
                     listener.onKeyboardFocused();
                 }else

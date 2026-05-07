@@ -4,5 +4,5 @@ public interface OnSensorActionListener {
     void onFlashlightTargetChanged();
     void onVolumeTargetChanged(int direction); // 1: incre, -1: decre
     void onMediaSkipTarget(boolean forward);
-    void onActionTriggered(String actionName); // for IoTs
+    void onPointerMovementChanged(int dx, int dy); // for mouse syncing
 }

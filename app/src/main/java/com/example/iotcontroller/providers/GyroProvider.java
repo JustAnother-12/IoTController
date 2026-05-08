@@ -27,8 +27,9 @@ public class GyroProvider implements SensorEventListener {
         //check if the Flashlight toggle is on
         if(sharedPreferences.getBoolean("MediaControl", false))
             callForMediaChange(event);
-        if(sharedPreferences.getBoolean("SmartTVControl", false)
-                && sharedPreferences.getBoolean("SyncPointer", false))
+        if(sharedPreferences.getBoolean("SyncPointer", false)
+                && sharedPreferences.getString("ConnectedIp", null) != null
+                && sharedPreferences.getString("ClientKey", null) != null)
             callForPointerChange(event);
     }
 

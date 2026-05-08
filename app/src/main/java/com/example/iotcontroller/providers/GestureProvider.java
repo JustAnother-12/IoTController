@@ -15,6 +15,7 @@ public class GestureProvider extends GestureDetector.SimpleOnGestureListener {
     private final SharedPreferences sharedPreferences;
     private static final int SWIPE_THRESHOLD = 100;
     private static final int SWIPE_VELOCITY_THRESHOLD = 100;
+    private float startX2 = 0;
 
     public GestureProvider(Context context) {
         this.context = context;
@@ -23,8 +24,7 @@ public class GestureProvider extends GestureDetector.SimpleOnGestureListener {
 
     @Override
     public boolean onSingleTapConfirmed(@NonNull MotionEvent e) {
-        if(sharedPreferences.getBoolean("SmartTVControl", false)
-                && sharedPreferences.getString("ConnectedIp", null) != null
+        if(sharedPreferences.getString("ConnectedIp", null) != null
                 && sharedPreferences.getString("ClientKey", null) != null){
 
             sendActionBroadcast("ENTER");
@@ -34,8 +34,7 @@ public class GestureProvider extends GestureDetector.SimpleOnGestureListener {
 
     @Override
     public boolean onFling(@Nullable MotionEvent e1, @NonNull MotionEvent e2, float velocityX, float velocityY) {
-        if(sharedPreferences.getBoolean("SmartTVControl", false)
-                && sharedPreferences.getString("ConnectedIp", null) != null
+        if(sharedPreferences.getString("ConnectedIp", null) != null
                 && sharedPreferences.getString("ClientKey", null) != null){
 
             if(e1 != null){
@@ -64,12 +63,10 @@ public class GestureProvider extends GestureDetector.SimpleOnGestureListener {
 
     public void handleTwoFingerGestures(MotionEvent event){
 
-        if(sharedPreferences.getBoolean("SmartTVControl", false)
-                && sharedPreferences.getString("ConnectedIp", null) != null
+        if(sharedPreferences.getString("ConnectedIp", null) != null
                 && sharedPreferences.getString("ClientKey", null) != null) {
 
-            float startX2 = 0;
-            switch (event.getAction() & MotionEvent.ACTION_MASK) {
+            switch (event.getActionMasked()) {
                 case MotionEvent.ACTION_POINTER_DOWN:
                     startX2 = event.getX();
                     break;
@@ -77,8 +74,10 @@ public class GestureProvider extends GestureDetector.SimpleOnGestureListener {
                     float endX2 = event.getX();
                     float deltaX = endX2 - startX2;
                     if (Math.abs(deltaX) > 150) {
-                        if (deltaX > 0) sendActionBroadcast("BACK");
-                        else sendActionBroadcast("HOME");
+                        if (deltaX > 0)
+                            sendActionBroadcast("HOME");
+                        else
+                            sendActionBroadcast("BACK");
                     }
                     break;
             }

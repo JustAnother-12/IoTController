@@ -1,68 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
+    android:layout_marginTop="10sp"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity"
-    android:orientation="vertical">
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Smart Sensor Controller"
-        android:textSize="32dp"
-        android:textStyle="bold"
-        android:layout_gravity="center"/>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="20dp">
-
-        <androidx.appcompat.widget.SwitchCompat
-            android:id="@+id/tgl_master"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Service switch"
-            android:textSize="24sp"
-            android:checked="false"/>
-        <androidx.appcompat.widget.SwitchCompat
-            android:id="@+id/tgl_volume"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Volume control switch"
-            android:textSize="16sp"
-            android:checked="false"/>
-        <androidx.appcompat.widget.SwitchCompat
-            android:id="@+id/tgl_media"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Media control switch"
-            android:textSize="16sp"
-            android:checked="false"/>
-        <androidx.appcompat.widget.SwitchCompat
-            android:id="@+id/tgl_flashlight"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Flashlight control switch"
-            android:textSize="16sp"
-            android:checked="false"/>
-        <androidx.appcompat.widget.SwitchCompat
-            android:id="@+id/tgl_smartTV"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Smart TV control switch"
-            android:textSize="16sp"
-            android:checked="false"/>
-    </LinearLayout>
+    tools:context=".MainActivity">
 
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/fragment_container"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content"
 
-</LinearLayout>
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/navigationBar"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"/>
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/navigationBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        android:background="?android:attr/windowBackground"
+        app:menu="@menu/navigation_item" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

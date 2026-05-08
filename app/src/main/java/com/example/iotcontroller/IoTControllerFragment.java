@@ -14,6 +14,7 @@ import android.util.Log;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
@@ -58,6 +59,8 @@ public class IoTControllerFragment extends Fragment {
 
     private SharedPreferences sharedPreferences;
 
+    private boolean isMultiTouch = false;
+
 
     public IoTControllerFragment() {
         // Required empty public constructor
@@ -91,13 +94,6 @@ public class IoTControllerFragment extends Fragment {
 
         if (deviceList == null) deviceList = new ArrayList<>();
 
-        if(recyclerView != null){
-            recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-            deviceAdapter = new DeviceAdapter(getContext(), deviceList);
-            recyclerView.setAdapter(deviceAdapter);
-        }else{
-            Log.e("IOT_DEBUG", "Cannot find recycleView in layout!");
-        }
 
         gestureProvider = new GestureProvider(getContext());
         gestureDetector = new GestureDetector(getContext(), gestureProvider);
@@ -105,6 +101,7 @@ public class IoTControllerFragment extends Fragment {
         inputMethodManager = (InputMethodManager) requireContext().getSystemService(Context.INPUT_METHOD_SERVICE);
 
         sharedPreferences = requireContext().getSharedPreferences("SmartControlPreference", Context.MODE_PRIVATE);
+        tglSyncPointer.setChecked(sharedPreferences.getBoolean("SyncPointer", false));
 
         broadcastReceiver = new BroadcastReceiver() {
             @Override
@@ -115,6 +112,8 @@ public class IoTControllerFragment extends Fragment {
                     inputMethodManager.showSoftInput(hiddenEditText, InputMethodManager.SHOW_IMPLICIT);
                 } else if ("HIDE_KEYBOARD".equals(actionName)) {
                     inputMethodManager.hideSoftInputFromWindow(hiddenEditText.getWindowToken(), 0);
+                } else if ("SERVICE_STOPPED".equals(actionName)) {
+                    btnDiscover.setChecked(false);
                 }
             }
         };
@@ -133,10 +132,21 @@ public class IoTControllerFragment extends Fragment {
             if(device != null){
                 txtPairedName.setText(device.getName());
                 txtPairedIP.setText(device.getIP());
+
+            }else{
+                txtPairedName.setText("No Device");
+                txtPairedIP.setText("");
             }
         });
 
-        //handle event
+        if(recyclerView != null){
+            recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+            deviceAdapter = new DeviceAdapter(getContext(), deviceList, ioTDeviceRepository, getViewLifecycleOwner());
+            recyclerView.setAdapter(deviceAdapter);
+        }else{
+            Log.e("IOT_DEBUG", "Cannot find recycleView in layout!");
+        }
+
         btnDiscover.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(@NonNull CompoundButton buttonView, boolean isChecked) {
@@ -197,13 +207,20 @@ public class IoTControllerFragment extends Fragment {
 
         gestureOverlayView.setOnTouchListener((v, event) ->{
             int pointerCount = event.getPointerCount();
-            if(pointerCount == 1){
-                return gestureDetector.onTouchEvent(event);
-            } else if (pointerCount == 2 ) {
+            int action = event.getActionMasked();
+
+            if(pointerCount > 1 && action == MotionEvent.ACTION_POINTER_DOWN)
+                isMultiTouch = true;
+
+            if(isMultiTouch){
                 gestureProvider.handleTwoFingerGestures(event);
+
+                if(action == MotionEvent.ACTION_UP)
+                    isMultiTouch = false;
                 return true;
             }
-            return true;
+
+            return gestureDetector.onTouchEvent(event);
         });
 
         // Inflate the layout for this fragment
@@ -231,5 +248,11 @@ public class IoTControllerFragment extends Fragment {
         Intent intent = new Intent("IOT_COMMAND");
         intent.putExtra("typed_key", keycode);
         LocalBroadcastManager.getInstance(requireContext()).sendBroadcast(intent);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        inputMethodManager.hideSoftInputFromWindow(hiddenEditText.getWindowToken(), 0);
     }
 }

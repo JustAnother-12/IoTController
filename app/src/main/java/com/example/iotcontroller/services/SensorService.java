@@ -218,21 +218,6 @@ public class SensorService extends Service implements OnSensorActionListener {
 
         return START_STICKY;
     }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(broadcastReceiver);
-
-        if(sensorManager != null){
-            sensorManager.unregisterListener(accelProvider);
-            sensorManager.unregisterListener(gyroProvider);
-            // add more later
-        }
-        Toast.makeText(this, "Service Stopped!", Toast.LENGTH_SHORT).show();
-        Log.d("SensorService", "Service Stopped.");
-    }
     private void scanIP(){
         new Thread(()->{
             try{
@@ -391,6 +376,7 @@ public class SensorService extends Service implements OnSensorActionListener {
         if(client != null && client.isOpen()){
             client.disconnect();
             client = null;
+            ioTDeviceRepository.updatePairedDevice(null);
         }
     }
 
@@ -410,27 +396,35 @@ public class SensorService extends Service implements OnSensorActionListener {
         if(ioTController.getWebOSClient() != null){
             switch (actionName){
                 case "TOAST":
+                    Log.d("IOT_DEBUG", actionName);
                     ioTController.handleShowToast(actionName);
                     break;
                 case "ENTER":
+                    Log.d("IOT_DEBUG", actionName);
                     ioTController.handleRemoteButton("ENTER");
                     break;
                 case "HOME":
+                    Log.d("IOT_DEBUG", actionName);
                     ioTController.handleRemoteButton("HOME");
                     break;
                 case "BACK":
+                    Log.d("IOT_DEBUG", actionName);
                     ioTController.handleRemoteButton("BACK");
                     break;
                 case "LEFT":
+                    Log.d("IOT_DEBUG", actionName);
                     ioTController.handleRemoteButton("LEFT");
                     break;
                 case "RIGHT":
+                    Log.d("IOT_DEBUG", actionName);
                     ioTController.handleRemoteButton("RIGHT");
                     break;
                 case "UP":
+                    Log.d("IOT_DEBUG", actionName);
                     ioTController.handleRemoteButton("UP");
                     break;
                 case "DOWN":
+                    Log.d("IOT_DEBUG", actionName);
                     ioTController.handleRemoteButton("DOWN");
                     break;
             }
@@ -457,5 +451,23 @@ public class SensorService extends Service implements OnSensorActionListener {
         if(ioTController != null){
             ioTController.handlePointerMove(dx, dy);
         }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        Intent intent = new Intent("COMMAND_UI");
+        intent.putExtra("action", "SERVICE_STOPPED");
+        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(broadcastReceiver);
+        ioTDeviceRepository.resetData();
+
+        if(sensorManager != null){
+            sensorManager.unregisterListener(accelProvider);
+            sensorManager.unregisterListener(gyroProvider);
+            // add more later
+        }
+        Toast.makeText(this, "Service Stopped!", Toast.LENGTH_SHORT).show();
+        Log.d("SensorService", "Service Stopped.");
     }
 }

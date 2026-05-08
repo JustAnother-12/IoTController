@@ -1,21 +1,20 @@
 package com.example.iotcontroller;
 
-import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CompoundButton;
 import android.widget.TextView;
-import android.widget.ToggleButton;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.RequiresPermission;
+import androidx.lifecycle.LifecycleOwner;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.iotcontroller.model.IoTDevice;
+import com.example.iotcontroller.model.IoTDeviceRepository;
 import com.example.iotcontroller.services.SensorService;
+import com.google.android.material.button.MaterialButton;
 
 import java.util.ArrayList;
 
@@ -23,21 +22,25 @@ public class DeviceAdapter extends RecyclerView.Adapter<DeviceAdapter.ViewHolder
 
     private Context context;
     private ArrayList<IoTDevice> IoTDevices;
+    private IoTDeviceRepository ioTDeviceRepository;
+    private LifecycleOwner lifecycleOwner;
 
-    public DeviceAdapter(Context context, ArrayList<IoTDevice> IoTDevices){
+    public DeviceAdapter(Context context, ArrayList<IoTDevice> IoTDevices, IoTDeviceRepository ioTDeviceRepository, LifecycleOwner owner){
         this.context = context;
         this.IoTDevices = IoTDevices;
+        this.ioTDeviceRepository = ioTDeviceRepository;
+        this.lifecycleOwner = owner;
     }
     public class ViewHolder extends RecyclerView.ViewHolder {
         private TextView textName;
         private TextView textIP;
-        private ToggleButton connectToggle;
+        private MaterialButton btnConnect;
 
         public ViewHolder(@NonNull View itemView){
             super(itemView);
             textName = itemView.findViewById(R.id.item_name);
             textIP = itemView.findViewById(R.id.item_IP);
-            connectToggle = itemView.findViewById(R.id.item_tgl);
+            btnConnect = itemView.findViewById(R.id.item_btn);
         }
     }
 
@@ -48,18 +51,18 @@ public class DeviceAdapter extends RecyclerView.Adapter<DeviceAdapter.ViewHolder
         View deviceView = inflater.inflate(R.layout.recycler_item, parent, false);
         ViewHolder viewHolder = new ViewHolder(deviceView);
 
-        viewHolder.connectToggle.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        viewHolder.btnConnect.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onCheckedChanged(@NonNull CompoundButton buttonView, boolean isChecked) {
+            public void onClick(View v) {
                 int position = viewHolder.getBindingAdapterPosition();
                 IoTDevice device = IoTDevices.get(position);
 
-                if(isChecked){
+                if(viewHolder.btnConnect.getText().equals("Connect")){
                     Intent intent = new Intent(parent.getContext(), SensorService.class);
                     intent.setAction("ACTION_PAIR_DEVICE");
                     intent.putExtra("IP_ADDRESS", device.getIP());
                     parent.getContext().startService(intent);
-                }else{
+                }else if(viewHolder.btnConnect.getText().equals("Disconnect")){
                     Intent intent = new Intent(parent.getContext(), SensorService.class);
                     intent.setAction("ACTION_UNPAIR_DEVICE");
                     parent.getContext().startService(intent);
@@ -75,6 +78,15 @@ public class DeviceAdapter extends RecyclerView.Adapter<DeviceAdapter.ViewHolder
         IoTDevice device = IoTDevices.get(position);
         holder.textName.setText(device.getName());
         holder.textIP.setText(device.getIP());
+
+        ioTDeviceRepository.getPairedDevice().observe(lifecycleOwner, pairedDevice -> {
+            if(pairedDevice != null){
+                if(pairedDevice.getIP().equals(device.getIP()))
+                    holder.btnConnect.setText("Disconnect");
+            }else{
+                holder.btnConnect.setText("Connect");
+            }
+        });
     }
 
     @Override

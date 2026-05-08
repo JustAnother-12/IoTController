@@ -27,4 +27,8 @@ public class IoTDeviceRepository {
     public void updateDevices(ArrayList<IoTDevice> newList) {
         deviceList.postValue(newList);
     }
+    public void resetData(){
+        pairedDevice.setValue(null);
+        deviceList.setValue(new ArrayList<>());
+    }
 }

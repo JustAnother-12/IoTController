@@ -14,163 +14,67 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
 
-import com.example.iotcontroller.interfaces.OnSensorActionListener;
 import com.example.iotcontroller.services.SensorService;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class MainActivity extends AppCompatActivity{
-    private SwitchCompat tglMaster;
-    private SwitchCompat tglVolume;
-    private SwitchCompat tglMedia;
-    private SwitchCompat tglFlashlight;
-    private SwitchCompat tglSmartTV;
-
-    private SharedPreferences sharedPreferences;
+    private BottomNavigationView bottomNavigationView;
 
     //fragment
-    IoTControllerFragment fragment;
+    IoTControllerFragment ioTFragment;
+    FeatureSwitchFragment featureFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        tglMaster = findViewById(R.id.tgl_master);
-        tglVolume = findViewById(R.id.tgl_volume);
-        tglMedia = findViewById(R.id.tgl_media);
-        tglFlashlight = findViewById(R.id.tgl_flashlight);
-        tglSmartTV = findViewById(R.id.tgl_smartTV);
+        bottomNavigationView = findViewById(R.id.navigationBar);
 
-        sharedPreferences = getSharedPreferences("SmartControlPreference", Context.MODE_PRIVATE);
+        bottomNavigationView.setOnItemSelectedListener((item) ->{
+            int itemId = item.getItemId();
+
+            if (itemId == R.id.navItemFeatures){
+                switchFragment(featureFragment);
+                return true;
+            }else if (itemId == R.id.navItemMedia){
+//                switchFragment(mediaFragment);
+                return true;
+            }else if (itemId == R.id.navItemSmartTV){
+                switchFragment(ioTFragment);
+                return true;
+            }
+            return false;
+        });
 
         if(savedInstanceState == null){
-            findViewById(R.id.fragment_container).post(() -> {
-                fragment = IoTControllerFragment.newInstance();
-                getSupportFragmentManager().beginTransaction()
-                        .setReorderingAllowed(true)
-                        .replace(R.id.fragment_container, fragment, "BT_CONTROLLER_TAG")
-                        .hide(fragment)
-                        .commitAllowingStateLoss();
-            });
-        }
-
-        //handle toggle
-        tglMaster.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(@NonNull CompoundButton buttonView, boolean isChecked) {
-                if(isChecked){
-                    checkAndStartService();
-                }else{
-                    tglVolume.setChecked(false);
-                    tglMedia.setChecked(false);
-                    tglFlashlight.setChecked(false);
-                    stopSensorService();
-                }
-            }
-        });
-
-        tglVolume.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(@NonNull CompoundButton buttonView, boolean isChecked) {
-                SharedPreferences.Editor editor = sharedPreferences.edit();
-                editor.putBoolean("VolumeControl", tglVolume.isChecked());
-                editor.apply();
-            }
-        });
-
-        tglMedia.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(@NonNull CompoundButton buttonView, boolean isChecked) {
-                SharedPreferences.Editor editor = sharedPreferences.edit();
-                editor.putBoolean("MediaControl", tglMedia.isChecked());
-                editor.apply();
-            }
-        });
-
-        tglFlashlight.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(@NonNull CompoundButton buttonView, boolean isChecked) {
-                SharedPreferences.Editor editor = sharedPreferences.edit();
-                editor.putBoolean("FlashlightControl", tglFlashlight.isChecked());
-                editor.apply();
-            }
-        });
-
-        tglSmartTV.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(@NonNull CompoundButton buttonView, boolean isChecked) {
-                SharedPreferences.Editor editor = sharedPreferences.edit();
-                editor.putBoolean("SmartTVControl", tglSmartTV.isChecked());
-                editor.apply();
-
-                toggleFragment(isChecked);
-            }
-        });
-    }
-
-    private void toggleFragment(boolean enable){
-        if(enable){
+            ioTFragment = IoTControllerFragment.newInstance();
+            featureFragment = FeatureSwitchFragment.newInstance();
             getSupportFragmentManager().beginTransaction()
-                    .show(fragment)
+                    .add(R.id.fragment_container, ioTFragment, "IOT")
+                    .add(R.id.fragment_container, featureFragment, "FEATURE")
+                    .hide(ioTFragment)
                     .commitAllowingStateLoss();
-        }else{
-            getSupportFragmentManager().beginTransaction()
-                    .hide(fragment)
-                    .commitAllowingStateLoss();
+
+            bottomNavigationView.setSelectedItemId(R.id.navItemFeatures);
+        } else {
+            ioTFragment = (IoTControllerFragment) getSupportFragmentManager().findFragmentByTag("IOT");
+            featureFragment = (FeatureSwitchFragment) getSupportFragmentManager().findFragmentByTag("FEATURE");
         }
 
     }
-    private void checkAndStartService() {
-        // list of relevant permission
-        String[] permissions = {
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.POST_NOTIFICATIONS,
-                Manifest.permission.CAMERA
-        };
 
-        // if the permissions are granted, start the service, else ask for permission
-        if (hasAllPermissions(permissions)) {
-            startSensorService();
-        }else{
-            requestPermissions(permissions, 101);
-        }
-    }
+    private void switchFragment(Fragment toShow) {
+        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+        // Ẩn tất cả các Fragment hiện có
+        if (ioTFragment != null) ft.hide(ioTFragment);
+        if (featureFragment != null) ft.hide(featureFragment);
+//        if (mediaFragment != null) ft.hide(mediaFragment);
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == 101) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                startSensorService();
-            } else {
-                Toast.makeText(this, "Bạn cần cấp quyền để các tính năng có thể hoạt động!", Toast.LENGTH_SHORT).show();
-            }
-        }
-    }
-
-    private boolean hasAllPermissions(String[] permissions){
-        for (String permission:permissions) {
-            int status = ContextCompat.checkSelfPermission(MainActivity.this, permission);
-            if (status != PackageManager.PERMISSION_GRANTED) {
-                return false;
-            }else{
-                continue;
-            }
-        }
-
-        return true;
-    }
-
-    private void startSensorService() {
-        Context context = getApplicationContext();
-        Intent intent = new Intent(this, SensorService.class);
-        intent.setAction("ACTION_START_SERVICE");
-        try {
-            context.startForegroundService(intent);
-        } catch (Exception e) {
-            Log.e("IOT_DEBUG", "Lỗi thực thi startService: " + e.getMessage());
-            e.printStackTrace();
-        }
+        ft.show(toShow).commit();
     }
 
     private void stopSensorService(){

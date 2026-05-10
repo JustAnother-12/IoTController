@@ -1,6 +1,7 @@
 package com.example.iotcontroller.services;
 
 import static com.example.iotcontroller.helper.helper.extractLocationUrl;
+import static com.example.iotcontroller.helper.helper.getWifiIPAddress;
 
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -16,6 +17,7 @@ import android.gesture.GestureOverlayView;
 import android.graphics.PixelFormat;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
@@ -90,6 +92,9 @@ public class SensorService extends Service implements OnSensorActionListener {
     //BroadcastReceiver
     private BroadcastReceiver broadcastReceiver;
 
+    //LocalServer
+    private LocalMediaServer localMediaServer;
+
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
@@ -146,6 +151,8 @@ public class SensorService extends Service implements OnSensorActionListener {
                 if(action != null && action.equals("IOT_COMMAND")){
                     String actionName = intent.getStringExtra("action_type");
                     String keycode = intent.getStringExtra("typed_key");
+                    Uri streamUri = intent.getParcelableExtra("streaming_uri");
+
                     if (actionName != null) {
                         handleGestureAction(actionName);
                     }
@@ -157,6 +164,9 @@ public class SensorService extends Service implements OnSensorActionListener {
                         }else {
                             ioTController.insertKeyboardText(keycode, false);
                         }
+                    }
+                    if(streamUri != null){
+                        startStreaming(streamUri);
                     }
                 } else if (action != null && action.equals("VIDEO_COMMAND")) {
                     boolean isVisible = intent.getBooleanExtra("IS_VISIBLE", false);
@@ -452,6 +462,22 @@ public class SensorService extends Service implements OnSensorActionListener {
         }
     }
 
+    private void startStreaming(Uri uri){
+        try{
+            if(localMediaServer != null && localMediaServer.isAlive()) localMediaServer.stop();
+
+            localMediaServer = new LocalMediaServer(8080, getApplicationContext(), uri);
+            localMediaServer.start();
+
+            String phoneIP = getWifiIPAddress(getApplicationContext());
+            String videoUrl = "http://" + phoneIP + ":8080/video.mp4";
+
+            ioTController.streamMedia(videoUrl);
+        }catch (Exception e){
+            Log.e("DLNA", "Lỗi phát video: " + e.getMessage());
+        }
+    }
+
     @Override
     public void onVolumeTargetChanged(int direction) {
         volumeController.adjustVolume(direction);
@@ -488,6 +514,7 @@ public class SensorService extends Service implements OnSensorActionListener {
         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
         LocalBroadcastManager.getInstance(this).unregisterReceiver(broadcastReceiver);
         ioTDeviceRepository.resetData();
+        if(localMediaServer!=null && localMediaServer.isAlive()) localMediaServer.stop();
 
         if(sensorManager != null){
             sensorManager.unregisterListener(accelProvider);

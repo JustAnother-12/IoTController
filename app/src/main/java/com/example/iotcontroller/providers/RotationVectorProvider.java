@@ -82,17 +82,11 @@ public class RotationVectorProvider implements SensorEventListener {
     }
 
     private float conversion(SensorEvent event){
-        // 1. Chuyển Rotation Vector thành Ma trận xoay (Rotation Matrix)
         SensorManager.getRotationMatrixFromVector(rotationMatrix, event.values);
 
-        // 2. Từ ma trận xoay, trích xuất ra các góc hướng (Orientation)
-        // orientationValues[0]: Azimuth (xoay quanh trục Z)
-        // orientationValues[1]: Pitch (xoay quanh trục X)
-        // orientationValues[2]: Roll (xoay quanh trục Y)
+        // orientationValues[2]: Roll (Y)
         SensorManager.getOrientation(rotationMatrix, orientationValues);
-
-        // 3. Lấy góc Roll (xoay nghiêng điện thoại sang trái/phải)
-        // Đổi từ Radian sang Degree (Độ)
+        
         return (float) Math.toDegrees(orientationValues[2]);
     }
 }

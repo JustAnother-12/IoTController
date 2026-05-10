@@ -1,5 +1,6 @@
 package com.example.iotcontroller;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -7,6 +8,8 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.gesture.GestureOverlayView;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -22,8 +25,11 @@ import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.ToggleButton;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.fragment.app.Fragment;
@@ -35,6 +41,7 @@ import com.example.iotcontroller.model.IoTDevice;
 import com.example.iotcontroller.model.IoTDeviceRepository;
 import com.example.iotcontroller.providers.GestureProvider;
 import com.example.iotcontroller.services.SensorService;
+import com.google.android.material.button.MaterialButton;
 
 import java.util.ArrayList;
 
@@ -43,7 +50,7 @@ public class IoTControllerFragment extends Fragment {
     private TextView txtPairedName, txtPairedIP;
     private EditText hiddenEditText;
     private GestureOverlayView gestureOverlayView;
-    private Button btnSyncKeyboard;
+    private MaterialButton btnSyncKeyboard, btnStreamMedia;
     private SwitchCompat tglSyncPointer;
     private ToggleButton btnDiscover;
     private ArrayList<IoTDevice> deviceList;
@@ -60,6 +67,21 @@ public class IoTControllerFragment extends Fragment {
     private SharedPreferences sharedPreferences;
 
     private boolean isMultiTouch = false;
+
+    private final ActivityResultLauncher<String> mediaPickerLauncher =
+            registerForActivityResult(new ActivityResultContracts.GetContent(), uri ->{
+                if(uri != null)
+                    startStreaming(uri);
+            });
+
+    private final ActivityResultLauncher<String> requestPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+                if (isGranted) {
+                    openPicker();
+                } else {
+                    Toast.makeText(getContext(), "Cần quyền truy cập để xem video", Toast.LENGTH_SHORT).show();
+                }
+            });
 
 
     public IoTControllerFragment() {
@@ -88,6 +110,7 @@ public class IoTControllerFragment extends Fragment {
         hiddenEditText = rootView.findViewById(R.id.hiddenEdit);
         btnDiscover = rootView.findViewById(R.id.btn_Discover);
         btnSyncKeyboard = rootView.findViewById(R.id.btn_sync_keyboard);
+        btnStreamMedia = rootView.findViewById(R.id.btn_stream_media);
         tglSyncPointer = rootView.findViewById(R.id.btn_sync_pointer);
         recyclerView = rootView.findViewById(R.id.recylerDevices);
         gestureOverlayView = rootView.findViewById(R.id.gestureOverlay);
@@ -171,6 +194,9 @@ public class IoTControllerFragment extends Fragment {
                 subscribeKeyboard();
             }
         });
+        btnStreamMedia.setOnClickListener(v ->{
+            checkPermissionAndPick();
+        });
 
         hiddenEditText.setOnKeyListener((v, keyCode, event) -> {
             if (event.getAction() == KeyEvent.ACTION_DOWN) {
@@ -225,6 +251,23 @@ public class IoTControllerFragment extends Fragment {
 
         // Inflate the layout for this fragment
         return rootView;
+    }
+
+    private void checkPermissionAndPick() {
+        String permission = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
+                ? Manifest.permission.READ_MEDIA_VIDEO
+                : Manifest.permission.READ_EXTERNAL_STORAGE;
+
+        requestPermissionLauncher.launch(permission);
+    }
+
+    private void openPicker(){
+        mediaPickerLauncher.launch("video/*");
+    }
+    private void startStreaming(Uri uri){
+        Intent intent = new Intent("IOT_COMMAND");
+        intent.putExtra("streaming_uri", uri);
+        LocalBroadcastManager.getInstance(requireContext()).sendBroadcast(intent);
     }
     private void startSSDPScan() {
         Intent intent = new Intent(getContext(), SensorService.class);

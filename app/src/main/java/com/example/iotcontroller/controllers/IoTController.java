@@ -1,5 +1,7 @@
 package com.example.iotcontroller.controllers;
 
+import android.util.Log;
+
 import com.example.iotcontroller.services.WebOSClient;
 
 import org.json.JSONObject;
@@ -86,5 +88,19 @@ public class IoTController {
         if(webOSClient != null && webOSClient.isOpen()){
             webOSClient.sendSystemCommand("com.webos.service.ime/sendEnterKey", null);
         }
+    }
+
+    public void streamMedia(String url){
+        try {
+
+            Log.e("DLNA", "Video URL: " + url);
+            JSONObject payload = new JSONObject();
+            payload.put("target", url);
+
+            webOSClient.sendSystemCommand("system.launcher/open", payload);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
     }
 }

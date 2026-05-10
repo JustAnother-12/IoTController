@@ -22,6 +22,7 @@ import android.util.Log;
 import android.util.Xml;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.Filter;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -41,6 +42,7 @@ import com.example.iotcontroller.model.IoTDeviceRepository;
 import com.example.iotcontroller.providers.AccelProvider;
 import com.example.iotcontroller.providers.GestureProvider;
 import com.example.iotcontroller.providers.GyroProvider;
+import com.example.iotcontroller.providers.RotationVectorProvider;
 
 import org.xmlpull.v1.XmlPullParser;
 
@@ -63,6 +65,8 @@ public class SensorService extends Service implements OnSensorActionListener {
     private Sensor accelerometer;
     private Sensor gyroscope;
 
+    private Sensor rotationVector;
+
     private IoTDeviceRepository ioTDeviceRepository;
     private ArrayList<IoTDevice> discoveredDevices;
     private ExecutorService executorService;
@@ -70,6 +74,7 @@ public class SensorService extends Service implements OnSensorActionListener {
     // Providers
     private AccelProvider accelProvider;
     private GyroProvider gyroProvider;
+    private RotationVectorProvider rotationVectorProvider;
 
     // Controllers
     private VolumeController volumeController;
@@ -95,8 +100,13 @@ public class SensorService extends Service implements OnSensorActionListener {
     public void onCreate() {
         super.onCreate();
         init();
+
+
+        IntentFilter filter = new IntentFilter();
+        filter.addAction("IOT_COMMAND");
+        filter.addAction("VIDEO_COMMAND");
         LocalBroadcastManager.getInstance(this).registerReceiver(
-                broadcastReceiver, new IntentFilter("IOT_COMMAND"));
+                broadcastReceiver, filter);
     }
 
     private void init(){
@@ -104,12 +114,14 @@ public class SensorService extends Service implements OnSensorActionListener {
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         gyroscope = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
+        rotationVector = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
 
         discoveredDevices = new ArrayList<>();
 
         // Providers
         accelProvider = new AccelProvider(this);
         gyroProvider = new GyroProvider(this);
+        rotationVectorProvider = new RotationVectorProvider(this);
 
         // Controllers
         volumeController = new VolumeController(this);
@@ -129,20 +141,28 @@ public class SensorService extends Service implements OnSensorActionListener {
         broadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                String actionName = intent.getStringExtra("action_type");
-                String keycode = intent.getStringExtra("typed_key");
-                if (actionName != null) {
-                    handleGestureAction(actionName);
-                }
-                if (keycode != null && ioTController != null){
-                    if(keycode.equals("ENTER_KEY")){
-                        ioTController.sendEnterKey();
-                    } else if (keycode.equals("BACKSPACE")) {
-                        ioTController.deleteKeyboardText(1);
-                    }else {
-                        ioTController.insertKeyboardText(keycode, false);
+                String action = intent.getAction();
+                Log.d("SERVICE_DEBUG", "Received action: " + action);
+                if(action != null && action.equals("IOT_COMMAND")){
+                    String actionName = intent.getStringExtra("action_type");
+                    String keycode = intent.getStringExtra("typed_key");
+                    if (actionName != null) {
+                        handleGestureAction(actionName);
                     }
+                    if (keycode != null && ioTController != null){
+                        if(keycode.equals("ENTER_KEY")){
+                            ioTController.sendEnterKey();
+                        } else if (keycode.equals("BACKSPACE")) {
+                            ioTController.deleteKeyboardText(1);
+                        }else {
+                            ioTController.insertKeyboardText(keycode, false);
+                        }
+                    }
+                } else if (action != null && action.equals("VIDEO_COMMAND")) {
+                    boolean isVisible = intent.getBooleanExtra("IS_VISIBLE", false);
+                    rotationVectorProvider.setUIVideoActive(isVisible);
                 }
+
             }
         };
 
@@ -385,6 +405,7 @@ public class SensorService extends Service implements OnSensorActionListener {
             sensorManager.registerListener(accelProvider, accelerometer, SensorManager.SENSOR_DELAY_UI);
             // low delay for high accuracy
             sensorManager.registerListener(gyroProvider, gyroscope, SensorManager.SENSOR_DELAY_GAME);
+            sensorManager.registerListener(rotationVectorProvider, rotationVector, SensorManager.SENSOR_DELAY_UI);
 
             Log.d("IOT_DEBUG", "Sensor Registered!");
         } else {
@@ -443,7 +464,13 @@ public class SensorService extends Service implements OnSensorActionListener {
 
     @Override
     public void onMediaSkipTarget(boolean forward) {
-
+        Intent intent = new Intent("COMMAND_VIDEO");
+        if(forward){
+            intent.putExtra("action", "SEEK_NEXT");
+        }else{
+            intent.putExtra("action", "SEEK_PREV");
+        }
+        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
     }
 
     @Override

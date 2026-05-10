@@ -43,4 +43,6 @@ dependencies {
     implementation("androidx.fragment:fragment:1.8.9")
     implementation("org.java-websocket:Java-WebSocket:1.5.3")
     implementation("androidx.localbroadcastmanager:localbroadcastmanager:1.1.0")
+    implementation("androidx.media3:media3-exoplayer:1.3.1")
+    implementation("androidx.media3:media3-ui:1.3.1")
 }

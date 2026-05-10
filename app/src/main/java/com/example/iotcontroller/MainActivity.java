@@ -26,6 +26,7 @@ public class MainActivity extends AppCompatActivity{
     //fragment
     IoTControllerFragment ioTFragment;
     FeatureSwitchFragment featureFragment;
+    VideoPlayerFragment videoPlayerFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,7 +42,7 @@ public class MainActivity extends AppCompatActivity{
                 switchFragment(featureFragment);
                 return true;
             }else if (itemId == R.id.navItemMedia){
-//                switchFragment(mediaFragment);
+                switchFragment(videoPlayerFragment);
                 return true;
             }else if (itemId == R.id.navItemSmartTV){
                 switchFragment(ioTFragment);
@@ -53,7 +54,9 @@ public class MainActivity extends AppCompatActivity{
         if(savedInstanceState == null){
             ioTFragment = IoTControllerFragment.newInstance();
             featureFragment = FeatureSwitchFragment.newInstance();
+            videoPlayerFragment = VideoPlayerFragment.newInstance();
             getSupportFragmentManager().beginTransaction()
+                    .add(R.id.fragment_container, videoPlayerFragment, "VIDEO")
                     .add(R.id.fragment_container, ioTFragment, "IOT")
                     .add(R.id.fragment_container, featureFragment, "FEATURE")
                     .hide(ioTFragment)
@@ -61,6 +64,7 @@ public class MainActivity extends AppCompatActivity{
 
             bottomNavigationView.setSelectedItemId(R.id.navItemFeatures);
         } else {
+            videoPlayerFragment = (VideoPlayerFragment) getSupportFragmentManager().findFragmentByTag("VIDEO");
             ioTFragment = (IoTControllerFragment) getSupportFragmentManager().findFragmentByTag("IOT");
             featureFragment = (FeatureSwitchFragment) getSupportFragmentManager().findFragmentByTag("FEATURE");
         }
@@ -72,7 +76,7 @@ public class MainActivity extends AppCompatActivity{
         // Ẩn tất cả các Fragment hiện có
         if (ioTFragment != null) ft.hide(ioTFragment);
         if (featureFragment != null) ft.hide(featureFragment);
-//        if (mediaFragment != null) ft.hide(mediaFragment);
+        if (videoPlayerFragment != null) ft.hide(videoPlayerFragment);
 
         ft.show(toShow).commit();
     }

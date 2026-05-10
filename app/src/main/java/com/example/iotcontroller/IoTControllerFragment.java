@@ -125,7 +125,7 @@ public class IoTControllerFragment extends Fragment {
         ioTDeviceRepository.getDeviceList().observe(getViewLifecycleOwner(), devices ->{
             if (devices != null) {
                 deviceAdapter.updateData(devices);
-                Log.d("BT_Fragment", "UI đã cập nhật với " + devices.size() + " thiết bị");
+                Log.d("IoT_Fragment", "UI đã cập nhật với " + devices.size() + " thiết bị");
             }
         });
         ioTDeviceRepository.getPairedDevice().observe(getViewLifecycleOwner(), device -> {

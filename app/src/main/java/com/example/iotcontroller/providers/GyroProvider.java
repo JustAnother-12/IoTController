@@ -5,11 +5,11 @@ import android.content.SharedPreferences;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
+import android.util.Log;
 
 import com.example.iotcontroller.interfaces.OnSensorActionListener;
 
 public class GyroProvider implements SensorEventListener {
-    private static final float THRESHOLD = 15f;
     private static final float POINTER_SENSITIVITY = 20f;
     private static final float POINTER_BOTTOM_THRESHOLD = 0.05f;
     private final OnSensorActionListener listener;
@@ -24,9 +24,6 @@ public class GyroProvider implements SensorEventListener {
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-        //check if the Flashlight toggle is on
-        if(sharedPreferences.getBoolean("MediaControl", false))
-            callForMediaChange(event);
         if(sharedPreferences.getBoolean("SyncPointer", false)
                 && sharedPreferences.getString("ConnectedIp", null) != null
                 && sharedPreferences.getString("ClientKey", null) != null)
@@ -61,20 +58,6 @@ public class GyroProvider implements SensorEventListener {
                     lastUpdated = currentTime;
                 }
             }
-        }
-    }
-
-    private void callForMediaChange(SensorEvent event){
-        float x = event.values[0];
-        long currentTime = System.currentTimeMillis();
-
-        //  300ms delay from last update
-        if((currentTime - lastUpdated) > 300){
-//            if(x > THRESHOLD || x < -THRESHOLD){
-//                // callback
-//                if(listener != null) listener.onMediaSkipTarget(true);
-//                lastUpdated = currentTime;
-//            }
         }
     }
 }

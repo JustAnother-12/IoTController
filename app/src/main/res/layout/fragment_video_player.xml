@@ -14,8 +14,7 @@
         android:id="@+id/btnSelectVideo"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="top|center_horizontal"
-        android:layout_marginTop="20dp"
-        android:text="Chọn Video từ máy" />
+        android:layout_gravity="center|center_horizontal"
+        android:text="Choose video from device" />
 
 </FrameLayout>

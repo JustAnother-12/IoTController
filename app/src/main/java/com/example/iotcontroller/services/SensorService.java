@@ -6,6 +6,7 @@ import static com.example.iotcontroller.helper.helper.getWifiIPAddress;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -13,8 +14,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.ServiceInfo;
-import android.gesture.GestureOverlayView;
-import android.graphics.PixelFormat;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.net.Uri;
@@ -22,19 +21,14 @@ import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
 import android.util.Xml;
-import android.view.WindowManager;
-import android.view.inputmethod.InputMethodManager;
-import android.widget.Filter;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.ServiceCompat;
-import androidx.core.view.WindowCompat;
-import androidx.core.view.WindowInsetsCompat;
-import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import com.example.iotcontroller.R;
 import com.example.iotcontroller.controllers.FlashlightController;
 import com.example.iotcontroller.controllers.IoTController;
 import com.example.iotcontroller.controllers.VolumeController;
@@ -42,7 +36,6 @@ import com.example.iotcontroller.interfaces.OnSensorActionListener;
 import com.example.iotcontroller.model.IoTDevice;
 import com.example.iotcontroller.model.IoTDeviceRepository;
 import com.example.iotcontroller.providers.AccelProvider;
-import com.example.iotcontroller.providers.GestureProvider;
 import com.example.iotcontroller.providers.GyroProvider;
 import com.example.iotcontroller.providers.RotationVectorProvider;
 
@@ -90,7 +83,8 @@ public class SensorService extends Service implements OnSensorActionListener {
     private WebOSClient client = null;
 
     //BroadcastReceiver
-    private BroadcastReceiver broadcastReceiver;
+    private BroadcastReceiver localBroadcastReceiver;
+    private BroadcastReceiver notificationBroadcastReceiver;
 
     //LocalServer
     private LocalMediaServer localMediaServer;
@@ -106,12 +100,13 @@ public class SensorService extends Service implements OnSensorActionListener {
         super.onCreate();
         init();
 
-
         IntentFilter filter = new IntentFilter();
         filter.addAction("IOT_COMMAND");
         filter.addAction("VIDEO_COMMAND");
         LocalBroadcastManager.getInstance(this).registerReceiver(
-                broadcastReceiver, filter);
+                localBroadcastReceiver, filter);
+
+        registerReceiver(notificationBroadcastReceiver, new IntentFilter("SERVICE_OFF"), Context.RECEIVER_NOT_EXPORTED);
     }
 
     private void init(){
@@ -143,11 +138,10 @@ public class SensorService extends Service implements OnSensorActionListener {
         sharedPreferences = getApplicationContext().getSharedPreferences("SmartControlPreference", Context.MODE_PRIVATE);
 
         //BroadcastReceiver
-        broadcastReceiver = new BroadcastReceiver() {
+        localBroadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 String action = intent.getAction();
-                Log.d("SERVICE_DEBUG", "Received action: " + action);
                 if(action != null && action.equals("IOT_COMMAND")){
                     String actionName = intent.getStringExtra("action_type");
                     String keycode = intent.getStringExtra("typed_key");
@@ -172,7 +166,18 @@ public class SensorService extends Service implements OnSensorActionListener {
                     boolean isVisible = intent.getBooleanExtra("IS_VISIBLE", false);
                     rotationVectorProvider.setUIVideoActive(isVisible);
                 }
+            }
+        };
 
+        notificationBroadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                String action = intent.getAction();
+                if(action != null && action.equals("SERVICE_OFF")){
+                    Intent serviceIntent = new Intent("COMMAND_FEATURE_UI");
+                    serviceIntent.putExtra("action", "TGL_MASTER_OFF");
+                    LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(serviceIntent);
+                }
             }
         };
 
@@ -204,8 +209,7 @@ public class SensorService extends Service implements OnSensorActionListener {
                 if(ioTController != null)
                     ioTController.subscribeKeyboard();
             } else if ("ACTION_STOP_SERVICE".equals(action)) {
-                stopForeground(true);
-                stopSelf();
+                stopService();
             } else if ("ACTION_START_SERVICE".equals(action)) {
                 String CHANNEL_ID = "sensor_service_channel";
                 // create notification channel
@@ -219,10 +223,22 @@ public class SensorService extends Service implements OnSensorActionListener {
                     manager.createNotificationChannel(channel);
                 }
 
+                Intent stopIntent = new Intent("SERVICE_OFF");
+                stopIntent.setPackage(getPackageName());
+                PendingIntent stopPendingIntent = PendingIntent.getBroadcast(
+                        getApplicationContext(),
+                        1,
+                        stopIntent,
+                        PendingIntent.FLAG_IMMUTABLE
+                );
+
                 // create the notification
                 Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+                        .setSmallIcon(R.drawable.ic_launcher_foreground)
                         .setContentTitle("Smart Control Active")
-                        .setContentText("Đang lắng nghe cảm biến để điều khiển thiết bị...")
+                        .setContentText("Cảm biến đang hoạt động...")
+                        .setPriority(NotificationCompat.PRIORITY_LOW)
+                        .addAction(R.drawable.switch_on, "Turn off Service", stopPendingIntent)
                         .build();
 
                 if (Build.VERSION.SDK_INT >= 34) { // Android 14+
@@ -247,6 +263,11 @@ public class SensorService extends Service implements OnSensorActionListener {
         }
 
         return START_STICKY;
+    }
+
+    private void stopService(){
+        stopForeground(true);
+        stopSelf();
     }
     private void scanIP(){
         new Thread(()->{
@@ -359,7 +380,7 @@ public class SensorService extends Service implements OnSensorActionListener {
                 @Override
                 public void onKeyboardFocused() {
                     Log.d("WebOS", "KEYBOARD FOCUSED");
-                    Intent intent = new Intent("COMMAND_UI");
+                    Intent intent = new Intent("COMMAND_IOT_UI");
                     intent.putExtra("action", "SHOW_KEYBOARD");
                     LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
                 }
@@ -367,7 +388,7 @@ public class SensorService extends Service implements OnSensorActionListener {
                 @Override
                 public void onKeyboardUnFocused() {
                     Log.d("WebOS", "KEYBOARD UNFOCUSED");
-                    Intent intent = new Intent("COMMAND_UI");
+                    Intent intent = new Intent("COMMAND_IOT_UI");
                     intent.putExtra("action", "HIDE_KEYBOARD");
                     LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
                 }
@@ -509,10 +530,10 @@ public class SensorService extends Service implements OnSensorActionListener {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        Intent intent = new Intent("COMMAND_UI");
+        Intent intent = new Intent("COMMAND_IOT_UI");
         intent.putExtra("action", "SERVICE_STOPPED");
         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(broadcastReceiver);
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(localBroadcastReceiver);
         ioTDeviceRepository.resetData();
         if(localMediaServer!=null && localMediaServer.isAlive()) localMediaServer.stop();
 

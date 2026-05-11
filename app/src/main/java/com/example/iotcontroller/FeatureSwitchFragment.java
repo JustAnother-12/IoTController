@@ -1,8 +1,10 @@
 package com.example.iotcontroller;
 
 import android.Manifest;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
@@ -13,11 +15,13 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.CompoundButton;
 import android.widget.Toast;
 
@@ -30,6 +34,8 @@ public class FeatureSwitchFragment extends Fragment {
     private SwitchCompat tglFlashlight;
 
     private SharedPreferences sharedPreferences;
+    //BroadcastReceiver
+    private BroadcastReceiver localBroadcastReceiver;
 
     private final ActivityResultLauncher<String[]> requestPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
@@ -72,6 +78,19 @@ public class FeatureSwitchFragment extends Fragment {
 
         tglVolume.setChecked(sharedPreferences.getBoolean("VolumeControl", false));
         tglFlashlight.setChecked(sharedPreferences.getBoolean("FlashlightControl", false));
+
+        localBroadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                String actionName = intent.getStringExtra("action");
+                if ("TGL_MASTER_OFF".equals(actionName)) {
+                    tglMaster.setChecked(false);
+                }
+            }
+        };
+
+        LocalBroadcastManager.getInstance(requireContext()).registerReceiver(
+                localBroadcastReceiver, new IntentFilter("COMMAND_FEATURE_UI"));
 
         //handle toggle
         tglMaster.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {

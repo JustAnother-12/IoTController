@@ -142,7 +142,7 @@ public class IoTControllerFragment extends Fragment {
         };
 
         LocalBroadcastManager.getInstance(requireContext()).registerReceiver(
-                broadcastReceiver, new IntentFilter("COMMAND_UI"));
+                broadcastReceiver, new IntentFilter("COMMAND_IOT_UI"));
 
         ioTDeviceRepository = IoTDeviceRepository.getInstance();
         ioTDeviceRepository.getDeviceList().observe(getViewLifecycleOwner(), devices ->{

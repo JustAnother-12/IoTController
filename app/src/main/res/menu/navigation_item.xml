@@ -3,13 +3,13 @@
     <item
         android:id="@+id/navItemFeatures"
         android:title="Features"
-        android:icon="@drawable/ic_launcher_foreground"/>
+        android:icon="@drawable/switch_fill"/>
     <item
         android:id="@+id/navItemMedia"
         android:title="Media"
-        android:icon="@drawable/ic_launcher_foreground"/>
+        android:icon="@drawable/media_library_filled"/>
     <item
         android:id="@+id/navItemSmartTV"
         android:title="SmartTV"
-        android:icon="@drawable/ic_launcher_foreground"/>
+        android:icon="@drawable/tv"/>
 </menu>

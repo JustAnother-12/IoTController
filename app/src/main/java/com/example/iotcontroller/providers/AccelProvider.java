@@ -10,7 +10,6 @@ import com.example.iotcontroller.interfaces.OnSensorActionListener;
 
 public class AccelProvider implements SensorEventListener {
     private static final float FLASHLIGHT_THRESHOLD = 15f;
-    private static final float IOT_THRESHOLD = 20f;
     private static final float VOLUME_CEIL_THRESHOLD = 12f;
     private static final float VOLUME_FlOOR_THRESHOLD = 3f;
     private final OnSensorActionListener listener;
@@ -29,8 +28,8 @@ public class AccelProvider implements SensorEventListener {
             //check if the toggle is on
             if (sharedPreferences.getBoolean("VolumeControl", false))
                 callForVolumeChange(event);
-            if (sharedPreferences.getBoolean("FlashlightControl", false))
-                callForFlashlightToggle(event);
+//            if (sharedPreferences.getBoolean("FlashlightControl", false))
+//                callForFlashlightToggle(event);
         }
     }
 

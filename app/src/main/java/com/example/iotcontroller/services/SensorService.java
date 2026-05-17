@@ -37,6 +37,7 @@ import com.example.iotcontroller.model.IoTDevice;
 import com.example.iotcontroller.model.IoTDeviceRepository;
 import com.example.iotcontroller.providers.AccelProvider;
 import com.example.iotcontroller.providers.GyroProvider;
+import com.example.iotcontroller.providers.LightSensorProvider;
 import com.example.iotcontroller.providers.RotationVectorProvider;
 
 import org.xmlpull.v1.XmlPullParser;
@@ -59,7 +60,7 @@ public class SensorService extends Service implements OnSensorActionListener {
     private SensorManager sensorManager;
     private Sensor accelerometer;
     private Sensor gyroscope;
-
+    private Sensor lightSensor;
     private Sensor rotationVector;
 
     private IoTDeviceRepository ioTDeviceRepository;
@@ -70,6 +71,7 @@ public class SensorService extends Service implements OnSensorActionListener {
     private AccelProvider accelProvider;
     private GyroProvider gyroProvider;
     private RotationVectorProvider rotationVectorProvider;
+    private LightSensorProvider lightSensorProvider;
 
     // Controllers
     private VolumeController volumeController;
@@ -115,6 +117,7 @@ public class SensorService extends Service implements OnSensorActionListener {
         accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         gyroscope = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
         rotationVector = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
+        lightSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
 
         discoveredDevices = new ArrayList<>();
 
@@ -122,6 +125,7 @@ public class SensorService extends Service implements OnSensorActionListener {
         accelProvider = new AccelProvider(this);
         gyroProvider = new GyroProvider(this);
         rotationVectorProvider = new RotationVectorProvider(this);
+        lightSensorProvider = new LightSensorProvider(this);
 
         // Controllers
         volumeController = new VolumeController(this);
@@ -437,6 +441,7 @@ public class SensorService extends Service implements OnSensorActionListener {
             // low delay for high accuracy
             sensorManager.registerListener(gyroProvider, gyroscope, SensorManager.SENSOR_DELAY_GAME);
             sensorManager.registerListener(rotationVectorProvider, rotationVector, SensorManager.SENSOR_DELAY_UI);
+            sensorManager.registerListener(lightSensorProvider, lightSensor, SensorManager.SENSOR_DELAY_GAME);
 
             Log.d("IOT_DEBUG", "Sensor Registered!");
         } else {
@@ -540,6 +545,8 @@ public class SensorService extends Service implements OnSensorActionListener {
         if(sensorManager != null){
             sensorManager.unregisterListener(accelProvider);
             sensorManager.unregisterListener(gyroProvider);
+            sensorManager.unregisterListener(rotationVectorProvider);
+            sensorManager.unregisterListener(lightSensorProvider);
             // add more later
         }
         Toast.makeText(this, "Service Stopped!", Toast.LENGTH_SHORT).show();
